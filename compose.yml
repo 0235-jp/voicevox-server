@@ -1,0 +1,25 @@
+networks:
+  web:
+    external: true
+
+services:
+    voicevox-api:
+      env_file:
+        - .env
+      container_name: "voicevox-api"
+      image: voicevox/voicevox_engine:cpu-ubuntu20.04-0.16.0
+      command: "gosu user /opt/python/bin/python3 ./run.py --voicelib_dir /opt/voicevox_core/ --runtime_dir /opt/onnxruntime/lib --host 0.0.0.0 --enable_cancellable_synthesis --cpu_num_threads ${CPU_NUM_THREADS}"
+      labels:
+        traefik.enable: "true"
+        traefik.http.routers.voicevox-api.rule: Host(`${API_HOST}`)
+        traefik.http.routers.voicevox-api.tls: "true"
+        traefik.http.routers.voicevox-api.entrypoints: https
+        traefik.http.routers.voicevox-api.tls.certresolver: le
+        traefik.http.routers.voicevox-api.middlewares: auth
+        traefik.http.middlewares.auth.basicauth.users: ${PASSWORD}
+      expose:
+        - "50021"
+      ports:
+        - 50021:50021
+      networks:
+        - web
